@@ -1,0 +1,82 @@
+body {
+    margin: 0;
+    padding: 0;
+    background: #1a1a1a;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+#map {
+    height: 100vh;
+    width: 100vw;
+}
+
+.controls {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+    background: rgba(20, 20, 20, 0.85);
+    backdrop-filter: blur(10px);
+    color: white;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    min-width: 200px;
+}
+
+h3 {
+    margin: 0 0 10px 0;
+    font-size: 18px;
+    color: #00d2ff;
+}
+
+.status {
+    font-size: 13px;
+    color: #bbb;
+    margin-bottom: 15px;
+    height: 1.2em;
+}
+
+.legend {
+    margin-bottom: 15px;
+    font-size: 12px;
+}
+
+.dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.exploring {
+    background: #00f3ff;
+    box-shadow: 0 0 5px #00f3ff;
+}
+
+.path {
+    background: #00ff15;
+    box-shadow: 0 0 5px #00ff15;
+}
+
+button {
+    width: 100%;
+    background: #333;
+    border: none;
+    color: white;
+    padding: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background: #ff4757;
+}
+
+/* 讓地圖上的線條有發光感 */
+.leaflet-interactive {
+    filter: drop-shadow(0 0 2px rgba(0, 243, 255, 0.5));
+}
