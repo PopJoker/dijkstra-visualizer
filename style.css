@@ -80,3 +80,36 @@ button:hover {
 .leaflet-interactive {
     filter: drop-shadow(0 0 2px rgba(0, 243, 255, 0.5));
 }
+
+.footer-links {
+    margin-top: 15px;
+    text-align: center;
+}
+
+.footer-links hr {
+    border: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    /* 淡淡的一條分隔線 */
+    margin-bottom: 12px;
+}
+
+.footer-links a {
+    color: #00d2ff;
+    /* 使用你原本起點的亮藍色 */
+    text-decoration: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    transition: all 0.2s ease;
+    display: inline-block;
+    padding: 4px 8px;
+    border: 1px solid transparent;
+}
+
+/* 滑鼠滑過去時的微發光特效 */
+.footer-links a:hover {
+    color: #00FF15;
+    /* 變成最短路徑的螢光綠 */
+    text-shadow: 0 0 8px rgba(0, 255, 21, 0.5);
+}

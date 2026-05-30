@@ -1,5 +1,6 @@
 // worker.js (完整修正版：精確路網探索)
 
+// Overpass API 備用名單
 const OVERPASS_URLS = [
     "https://overpass-api.de/api/interpreter",
     "https://lz4.overpass-api.de/api/interpreter",
@@ -9,6 +10,7 @@ const OVERPASS_URLS = [
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+// 撈 OSM 資料 失敗自動換伺服器重試
 async function fetchWithRetry(query) {
     for (const url of OVERPASS_URLS) {
         try {
@@ -35,6 +37,7 @@ self.onmessage = async function (e) {
         let explored = [];
         let path = [];
 
+        // 經緯度算實際距離 (Haversine 公式)
         const heuristic = (a, b) => {
             const R = 6371000;
             const dLat = (a.lat - b.lat) * Math.PI / 180;
@@ -45,12 +48,14 @@ self.onmessage = async function (e) {
             return 2 * R * Math.asin(Math.sqrt(x));
         };
 
+        // 擴大搜尋邊界 避免斷路
         const buffer = 0.008;
         const minLat = Math.min(start.lat, end.lat) - buffer;
         const maxLat = Math.max(start.lat, end.lat) + buffer;
         const minLng = Math.min(start.lng, end.lng) - buffer;
         const maxLng = Math.max(start.lng, end.lng) + buffer;
 
+        // 撈範圍內可通行的道路
         const query = `
             [out:json][timeout:25];
             (way["highway"~"primary|secondary|tertiary|residential|service|unclassified"]
@@ -63,14 +68,14 @@ self.onmessage = async function (e) {
         const nodes = new Map();
         const adj = new Map();
 
-        // 1. 建立節點表
+        // 1 建立節點表
         for (const el of osmData.elements) {
             if (el.type === "node") {
                 nodes.set(el.id, { lat: el.lat, lng: el.lon });
             }
         }
 
-        // 2. 建立精確圖資 (把 way 裡面相鄰的點全部連起來)
+        // 2 建立鄰接表 將 way 拆解成點對點的邊並算距離
         for (const el of osmData.elements) {
             if (el.type === "way" && el.nodes) {
                 for (let i = 0; i < el.nodes.length - 1; i++) {
@@ -82,18 +87,17 @@ self.onmessage = async function (e) {
                     if (!adj.has(u)) adj.set(u, []);
                     if (!adj.has(v)) adj.set(v, []);
 
-                    // 將每一小段都視為可探索的邊
+                    // 預設雙向
                     adj.get(u).push({ to: v, w: d });
                     adj.get(v).push({ to: u, w: d });
                 }
             }
         }
 
-        // 3. 找最近點
+        // 3 點對齊 找出最靠近點擊位置的真實道路節點
         let sId = null, eId = null;
         let dS = Infinity, dE = Infinity;
         for (const [id, coord] of nodes) {
-            // 只有在 adj 裡面有出現的點（真正的路徑點）才列入考慮
             if (!adj.has(id)) continue;
             const ds = heuristic(coord, start);
             const de = heuristic(coord, end);
@@ -103,7 +107,7 @@ self.onmessage = async function (e) {
 
         if (!sId || !eId) throw new Error("找不到道路。");
 
-        // 4. A* 搜尋
+        // 4 A* 搜尋
         const openSet = new Set([sId]);
         const gScore = new Map([[sId, 0]]);
         const fScore = new Map([[sId, heuristic(nodes.get(sId), nodes.get(eId))]]);
@@ -111,6 +115,7 @@ self.onmessage = async function (e) {
         const visited = new Set();
 
         while (openSet.size > 0) {
+            // 取 fScore 最小的節點
             let curr = null;
             let minF = Infinity;
             for (const id of openSet) {
@@ -134,7 +139,7 @@ self.onmessage = async function (e) {
                     fScore.set(edge.to, tentativeG + heuristic(nodes.get(edge.to), nodes.get(eId)));
                     openSet.add(edge.to);
 
-                    // 💡 重點：現在每一條探索邊都是馬路上的微小片段
+                    // 存探索邊 給前端畫動畫
                     const u = nodes.get(curr);
                     const v = nodes.get(edge.to);
                     explored.push([[u.lat, u.lng], [v.lat, v.lng]]);
@@ -142,7 +147,7 @@ self.onmessage = async function (e) {
             }
         }
 
-        // 5. 重建路徑
+        // 5 回溯重建最短路徑
         let temp = eId;
         while (cameFrom.has(temp)) {
             const prev = cameFrom.get(temp);
